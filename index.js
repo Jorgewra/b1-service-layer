@@ -1,6 +1,7 @@
 const axios = require('axios')
 const moment = require('moment')
 const https = require('https')
+require('tls').DEFAULT_MIN_VERSION = 'TLSv1'
 
 class ServiceLayer {
   constructor() {
@@ -9,6 +10,7 @@ class ServiceLayer {
     this.startSessionTime = null
     this.endSessionTime = null
     this.config = null
+    this.version = null
   }
 
   /**
@@ -28,14 +30,14 @@ class ServiceLayer {
         httpsAgent: new https.Agent({
           rejectUnauthorized: false
         }),
-        baseURL: `${config.host}:${config.port}/b1s/v2/`
+        baseURL: `${config.host}:${config.port}/b1s/${config.version}/`
       })
     } else {
       this.instance = axios.create({
         httpsAgent: new https.Agent({
           rejectUnauthorized: false
         }),
-        baseURL: `${config.host}/b1s/v2/`
+        baseURL: `${config.host}/b1s/${config.version}/`
       })
     }
 
