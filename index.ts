@@ -1,21 +1,43 @@
 import axios from 'axios';
 import dayjs from 'dayjs';
 import https from 'https';
-
+/**
+ *  @param {number}  Port     - your porte in the server SAP for API SL
+ *  @param {String}  version  - your version API in the SL
+ *  @param {boolean} debug    - if your project is debug
+ *  @param {String}  host     - your Host server SAP
+ *  @param {String}  company  - your DB Company for SAP
+ *  @param {String}  password - your password for SAP
+ *  @param {String}  username - your user for SAP
+ */
+type ConfigProp = {
+  port: number;
+  version: string;
+  debug: boolean;
+  host:string;
+  company: string;
+  password: string;
+  username: string;
+};
 class ServiceLayer {
+  private instance: any = null;
+  private sessionTimeout = 0;
+  private startSessionTime:any = null;
+  private endSessionTime = null;
+  private config: ConfigProp;
   /**
    * Represents the constructor of the B1ServiceLayer class.
    * @constructor
    */
   constructor() {
-    this.instance = null;
-    this.sessionTimeout = 0;
-    this.startSessionTime = null;
-    this.endSessionTime = null;
-    this.config = { 
+    this.config = {
       port: 50001,
       version: 'v2',
-      debug: false
+      debug: false,
+      host:"http://localhost",
+      company:"",
+      password:"",
+      username:"",        
     };
   }
 
@@ -23,10 +45,10 @@ class ServiceLayer {
    * Create a new session
    * config object: {host, company, password, username}
    */
-  async createSession(config) {
+  async createSession(config: ConfigProp) {
     this.config = config = { ...this.config, ...config };
     if (config.debug) {
-      console.log("Config parameters",this.config);
+      console.log('Config parameters', this.config);
     }
     axios.defaults.withCredentials = true;
 
@@ -68,7 +90,7 @@ class ServiceLayer {
       console.log(`Session Timeout: ${this.sessionTimeout}`);
       console.log(`Start Session Time: ${this.startSessionTime}`);
       console.log(`End Session Time: ${this.endSessionTime}`);
-    } 
+    }
   }
 
   /**
@@ -78,7 +100,7 @@ class ServiceLayer {
     const now = dayjs();
     if (now.isAfter(this.endSessionTime)) {
       if (this.config.debug) {
-        console.warn("The session is expired. Refreshing...");
+        console.warn('The session is expired. Refreshing...');
       }
       await this.createSession(this.config);
     }
@@ -90,7 +112,7 @@ class ServiceLayer {
    * @param {Object} options - Axios options object.
    * @returns {Promise<Array>} - A promise that resolves to an array of records.
    */
-  async query(q, options = {}) {
+  async query(q:string, options:any = {}) {
     await this.refreshSession();
     const result = await this.instance.get(q, options);
     return result.data;
@@ -103,10 +125,10 @@ class ServiceLayer {
    * @returns {Promise<Array>} - A promise that resolves to an array of records.
    * (eg: ProductionOrders?$select=AbsoluteEntry, DocumentNumber)
    */
-  async find(query, options = {}) {
+  async find(query:string, options:any = {}) {
     await this.refreshSession();
 
-    let result = [];
+    let result:any = [];
     let request = await this.query(query);
     result = result.concat(request.value);
 
@@ -124,29 +146,32 @@ class ServiceLayer {
 
   /**
    * Get Resource (eg Orders(10))
-   * @param {String} query - The query string.
+   * @param {String} resource - The resource string.
    * @param {Object} options - Axios options object.
    * @returns {Promise<Array>} - A promise that resolves to an array of records.
    */
-  async get(resource, options = {}) {
+  async get(resource:string, options:any = {}) {
     try {
       await this.refreshSession();
       const result = await this.instance.get(resource, options);
       return result.data;
-    } catch (error) {
+    } catch (error:any) {
       return this.parseError(error);
     }
   }
 
   /**
    * Update Resource
+   * @param {String} resource - The resource string.
+   * @param {Object} data - Axios options object.
+   * @returns {Promise<Array>} - A promise that resolves to an array of records.
    */
-  async put(resource, data) {
+  async put(resource:string, data:any) {
     try {
       await this.refreshSession();
       const result = await this.instance.put(resource, data);
       return result.data;
-    } catch (error) {
+    } catch (error:any) {
       return this.parseError(error);
     }
   }
@@ -154,12 +179,12 @@ class ServiceLayer {
   /**
    * Update Resource partially
    */
-  async patch(resource, data) {
+  async patch(resource:string, data:any) {
     try {
       await this.refreshSession();
       const result = await this.instance.patch(resource, data);
       return result.data;
-    } catch (error) {
+    } catch (error:any) {
       return this.parseError(error);
     }
   }
@@ -167,12 +192,12 @@ class ServiceLayer {
   /**
    * Create resource
    */
-  async post(resource, data) {
+  async post(resource:string, data:any) {
     try {
       await this.refreshSession();
       const result = await this.instance.post(resource, data);
       return result.data;
-    } catch (error) {
+    } catch (error:any) {
       return this.parseError(error);
     }
   }
@@ -181,19 +206,18 @@ class ServiceLayer {
    * Parse error message
    */
 
-  parseError({response, request, message}) {
+  parseError({ response, request, message }:any) {
     if (response) {
       console.error('🟥 \x1b[31m%s\x1b[0m', 'ERROR RESPONSE SERVICE LAYER');
-      console.error('%s: \x1b[36m%s\x1b[0m', "URL", request.path);
-      console.error("Status: \x1b[33m%s\x1b[0m - %s", response.status, 
-        response.statusText);
-      console.error("Data:", response.data);
-      console.error("Headers:", response.headers);
+      console.error('%s: \x1b[36m%s\x1b[0m', 'URL', request.path);
+      console.error('Status: \x1b[33m%s\x1b[0m - %s', response.status, response.statusText);
+      console.error('Data:', response.data);
+      console.error('Headers:', response.headers);
       return { error: true, message: response.data };
     }
     if (request) {
-      console.error('🟥 \x1b[31m%s\x1b[0m','ERROR REQUEST');
-      console.error('%s: \x1b[36m%s\x1b[0m', "URL", request.path);
+      console.error('🟥 \x1b[31m%s\x1b[0m', 'ERROR REQUEST');
+      console.error('%s: \x1b[36m%s\x1b[0m', 'URL', request.path);
       return { error: true, message: 'ERROR REQUEST' };
     }
     // Something happened in setting up the request and triggered an Error
