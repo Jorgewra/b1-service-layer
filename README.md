@@ -4,13 +4,13 @@ JS library for SAP Business One Service Layer API.
 
 ### How Install it ? ###
 ```
-npm i b1-service-layer --save
+npm i b1-service-layer-ts --save
 ```
 
 ### Usage ###
 
 ```js
-import sl from "b1-service-layer"
+import sl from "b1-service-layer-ts"
 ```
 
 Set your config object
