@@ -13,7 +13,7 @@
     "type": "git",
     "url": "git+https://github.com/Jorgewra/b1-service-layer.git"
   },
-  "author": "Nicolas ESTEBE / Jorge Almeida",
+  "author": "Jorge Almeida",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.5.1",
@@ -28,9 +28,9 @@
 
   ],
   "bugs": {
-    "url": "https://github.com/nestebe/b1-service-layer/issues"
+    "url": "https://github.com/Jorgewra/b1-service-layer/issues"
   },
-  "homepage": "https://github.com/nestebe/b1-service-layer#readme",
+  "homepage": "https://github.com/Jorgewra/b1-service-layer#readme",
   "directories": {
     "test": "test"
   },
