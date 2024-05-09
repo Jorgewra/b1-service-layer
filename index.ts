@@ -1,6 +1,6 @@
 import axios from 'axios';
 import dayjs from 'dayjs';
-import https from 'https';
+import * as https from "https";
 /**
  *  @param {number}  Port     - your porte in the server SAP for API SL
  *  @param {String}  version  - your version API in the SL
@@ -19,11 +19,12 @@ type ConfigProp = {
   password: string;
   username: string;
 };
+
 class ServiceLayer {
   private instance: any = null;
   private sessionTimeout = 0;
   private startSessionTime:any = null;
-  private endSessionTime = null;
+  private endSessionTime:any = null;
   private config: ConfigProp;
   /**
    * Represents the constructor of the B1ServiceLayer class.
@@ -31,7 +32,7 @@ class ServiceLayer {
    */
   constructor() {
     this.config = {
-      port: 50001,
+      port: 80,
       version: 'v2',
       debug: false,
       host:"http://localhost",
@@ -51,27 +52,24 @@ class ServiceLayer {
       console.log('Config parameters', this.config);
     }
     axios.defaults.withCredentials = true;
-
+    
     if (config.host.slice(-1) === '/') {
       config.host = config.host.substring(0, config.host.length - 1);
     }
 
-    if (config.port) {
-      this.instance = axios.create({
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: false
-        }),
-        baseURL: `${config.host}:${config.port}/b1s/${config.version}/`
-      });
-    } else {
-      this.instance = axios.create({
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: false
-        }),
-        baseURL: `${config.host}/b1s/${config.version}/`
-      });
-    }
-
+    this.instance = axios.create({
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: false
+      }),  
+      validateStatus: function (status) {
+        return ((status >= 200 && status < 300) || status === 405); // default
+      },
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+      baseURL: `${config.host}:${config.port}/b1s/${config.version}/`
+    });
     const result = await this.instance.post('Login', {
       CompanyDB: config.company,
       Password: config.password,
@@ -91,6 +89,7 @@ class ServiceLayer {
       console.log(`Start Session Time: ${this.startSessionTime}`);
       console.log(`End Session Time: ${this.endSessionTime}`);
     }
+    
   }
 
   /**
